@@ -12,3 +12,5 @@ __pycache__/
 .Python
 
 .DS_Store
+.python
+.python-version

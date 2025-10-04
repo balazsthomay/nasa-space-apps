@@ -396,6 +396,17 @@ class PhysicsEngine:
         # Distance from HZ center
         hz_distance = abs(semi_major_axis - hz_conservative['hz_center_au'])
 
+        # Calculate additional planet properties
+        planet_radius_rjup = planet_radius / 11.2  # 1 Jupiter radius = 11.2 Earth radii
+
+        # Calculate insolation (relative to Earth)
+        stellar_luminosity = hz_conservative['stellar_luminosity']
+        insolation_earth = stellar_luminosity / (semi_major_axis ** 2)
+
+        # Estimate mass (if not calculated above)
+        if 'estimated_mass_mearth' not in locals():
+            estimated_mass_mearth = planet_mass
+
         return {
             'stellar': {
                 'mass_msun': stellar_mass,
@@ -406,9 +417,12 @@ class PhysicsEngine:
             },
             'planet': {
                 'radius_rearth': planet_radius,
+                'radius_rjup': planet_radius_rjup,
                 'mass_mearth': planet_mass,
+                'estimated_mass_mearth': planet_mass,
                 'mass_uncertainty_factor': mass_uncertainty,
-                'equilibrium_temp_K': equilibrium_temp
+                'equilibrium_temp_K': equilibrium_temp,
+                'insolation_earth': insolation_earth
             },
             'orbit': {
                 'period_days': period_days,

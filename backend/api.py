@@ -97,12 +97,15 @@ async def startup_event():
     logger.info("Loading models and data...")
 
     try:
+        # Get project root (parent of backend directory)
+        project_root = Path(__file__).parent.parent
+
         # Load ensemble predictor
-        predictor = EnsemblePredictor()
+        predictor = EnsemblePredictor(models_dir=str(project_root / "models"))
         predictor.load_models()
 
         # Load training data for SHAP background
-        train_df = pd.read_csv("data/processed/features_train.csv")
+        train_df = pd.read_csv(project_root / "data/processed/features_train.csv")
         exclude_cols = ['target', 'disposition', 'kepid', 'koi_name']
         feature_cols = [col for col in train_df.columns if col not in exclude_cols]
 
@@ -116,18 +119,18 @@ async def startup_event():
         predictor.create_shap_explainers(X_train, sample_size=100)
 
         # Load feature names
-        with open("models/feature_names.json", 'r') as f:
+        with open(project_root / "models/feature_names.json", 'r') as f:
             feature_names = json.load(f)
 
         # Load model metrics
-        with open("models/metrics.json", 'r') as f:
+        with open(project_root / "models/metrics.json", 'r') as f:
             model_metrics = json.load(f)
 
         # Initialize physics engine
         physics_engine = PhysicsEngine()
 
         # Load demo targets
-        test_df = pd.read_csv("data/processed/features_test.csv")
+        test_df = pd.read_csv(project_root / "data/processed/features_test.csv")
         demo_targets = [
             {
                 "id": str(idx),
@@ -243,16 +246,55 @@ async def predict_system(transit_data: TransitData):
         # Validate physics
         validation = physics_engine.validate_system(system_params)
 
-        # For ML prediction, we'd need to construct full feature vector
-        # For now, return physics-based analysis
-        # In a full implementation, you'd extract features from transit_data
+        # Construct feature vector from transit data and calculated params
+        features = _construct_features_from_transit(transit_data, system_params)
+
+        # Create DataFrame
+        X = pd.DataFrame([features])[feature_names]
+
+        # Handle inf and missing values
+        X.replace([np.inf, -np.inf], np.nan, inplace=True)
+        for col in feature_names:
+            if X[col].isnull().any():
+                X[col].fillna(0, inplace=True)
+
+        # Get ML prediction from ensemble
+        ml_results = predictor.predict_ensemble(X, voting='soft')
+
+        # Get SHAP explanations
+        top_features = []
+        try:
+            shap_explanations = predictor.explain_predictions(X)
+            # Get ensemble feature importance
+            ensemble_importance = predictor.get_ensemble_feature_importance(shap_explanations)
+            # Top 10 features
+            top_features = [
+                {"feature": name, "importance": float(importance)}
+                for name, importance in ensemble_importance[:10]
+            ]
+        except Exception as e:
+            logger.warning(f"SHAP explanation failed: {e}")
+
+        # Format prediction
+        prediction = PredictionResponse(
+            is_planet=bool(ml_results['predictions'][0] == 1),
+            probability=float(ml_results['probabilities'][0]),
+            confidence=float(ml_results['confidence'][0]),
+            individual_models={
+                model_name: float(proba[0])
+                for model_name, proba in ml_results['individual_probabilities'].items()
+            },
+            ensemble_method=ml_results['voting_method']
+        )
 
         response = {
+            "prediction": prediction.dict(),
             "system_parameters": system_params,
             "validation": validation,
             "habitable_zone": system_params['habitability'],
             "planet_type": _classify_planet_type(system_params['planet']['radius_rearth']),
-            "temperature_category": _classify_temperature(system_params['planet']['equilibrium_temp_K'])
+            "temperature_category": _classify_temperature(system_params['planet']['equilibrium_temp_K']),
+            "top_features": top_features
         }
 
         return response
@@ -309,6 +351,115 @@ async def health_check():
 
 
 # Helper functions
+def _construct_features_from_transit(transit_data: TransitData, system_params: Dict) -> Dict[str, float]:
+    """
+    Construct 46-feature vector matching the exact features from training.
+    """
+    # Extract calculated params
+    planet = system_params['planet']
+    orbit = system_params['orbit']
+    hab = system_params['habitability']
+
+    # Basic params
+    period_days = transit_data.period_days
+    depth_ppm = transit_data.transit_depth_ppm
+    duration_hrs = transit_data.transit_duration_hrs
+    stellar_teff = transit_data.stellar_teff
+    stellar_radius = transit_data.stellar_radius
+    stellar_logg = transit_data.stellar_logg
+    impact_param = transit_data.impact_parameter
+
+    # Derived values
+    planet_radius = planet['radius_rearth']
+    planet_teq = planet['equilibrium_temp_K']
+    insolation = planet['insolation_earth']
+    sma = orbit['semi_major_axis_au']
+
+    # Estimate SNR
+    snr_estimate = np.sqrt(depth_ppm) / 10.0
+
+    # Radius ratio
+    radius_ratio = planet_radius / (stellar_radius * 109.2)  # Convert to same units
+    expected_depth = (radius_ratio ** 2) * 1e6
+    depth_anomaly = abs(depth_ppm - expected_depth) / depth_ppm if depth_ppm > 0 else 0.0
+
+    features = {
+        # Transit features
+        'transit_depth_ppm': depth_ppm,
+        'transit_duration_hrs': duration_hrs,
+        'orbital_period_days': period_days,
+        'impact_parameter': impact_param,
+        'transit_snr': snr_estimate,
+        'log_period': np.log10(period_days),
+        'log_depth': np.log10(depth_ppm),
+        'duration_period_ratio': duration_hrs / (period_days * 24),
+        'transit_shape_factor': impact_param * duration_hrs,
+
+        # Stellar features
+        'stellar_teff_K': stellar_teff,
+        'stellar_radius_rsun': stellar_radius,
+        'stellar_logg': stellar_logg,
+        'stellar_teff_normalized': stellar_teff / 5778.0,
+        'stellar_density_proxy': (10 ** stellar_logg) / (stellar_radius ** 2),
+        'stellar_luminosity_proxy': (stellar_radius ** 2) * ((stellar_teff / 5778) ** 4),
+
+        # Planetary features
+        'planet_radius_rearth': planet_radius,
+        'planet_teq_K': planet_teq,
+        'insolation_flux_earth': insolation,
+        'log_planet_radius': np.log10(planet_radius),
+        'log_insolation': np.log10(insolation) if insolation > 0 else 0,
+
+        # Planet type flags
+        'is_rocky_size': float(planet_radius < 1.5),
+        'is_super_earth_size': float(1.5 <= planet_radius < 2.0),
+        'is_mini_neptune_size': float(2.0 <= planet_radius < 4.0),
+        'is_gas_giant_size': float(planet_radius >= 4.0),
+
+        # Temperature flags
+        'is_hot': float(planet_teq > 1000),
+        'is_warm': float(300 <= planet_teq <= 1000),
+        'is_temperate': float(200 <= planet_teq < 300),
+        'is_cold': float(planet_teq < 200),
+
+        # Orbital features
+        'semi_major_axis_au': sma,
+        'orbital_velocity_kms': orbit['orbital_velocity_km_s'],
+        'density_proxy': planet['mass_mearth'] / (planet_radius ** 3),
+        'in_habitable_zone': float(hab['in_hz_conservative']),
+        'hz_distance_normalized': sma / hab['hz_center_au'],
+        'transit_probability': orbit['transit_probability'],
+
+        # Transit consistency checks
+        'radius_ratio': radius_ratio,
+        'expected_transit_depth_ppm': expected_depth,
+        'depth_anomaly': depth_anomaly,
+
+        # Uncertainty estimates (10% default)
+        'period_uncertainty': period_days * 0.1,
+        'radius_uncertainty': planet_radius * 0.1,
+        'depth_uncertainty': depth_ppm * 0.1,
+        'measurement_quality': snr_estimate / 10.0,  # Normalized quality
+
+        # False positive flags
+        'fp_flag_not_transit_like': float(depth_anomaly > 0.5 or impact_param > 0.95),
+        'fp_flag_stellar_eclipse': float(depth_ppm > 10000),  # Very deep = binary eclipse
+        'fp_flag_centroid_offset': 0.0,  # Would need centroid data
+        'fp_flag_ephemeris_match': 0.0,  # Would need multiple transits
+        'total_fp_flags': 0.0
+    }
+
+    # Calculate total FP flags
+    features['total_fp_flags'] = (
+        features['fp_flag_not_transit_like'] +
+        features['fp_flag_stellar_eclipse'] +
+        features['fp_flag_centroid_offset'] +
+        features['fp_flag_ephemeris_match']
+    )
+
+    return features
+
+
 def _classify_planet_type(radius_rearth: float) -> str:
     """Classify planet by size."""
     if radius_rearth < 1.5:

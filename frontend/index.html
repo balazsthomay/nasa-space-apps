@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exoplanet System Detective - 3D Visualization</title>
+
+    <!-- Import map for Three.js -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.158.0/examples/jsm/"
+        }
+    }
+    </script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #000;
+            color: #fff;
+            overflow: hidden;
+        }
+
+        #container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        #canvas-container {
+            width: 100%;
+            height: 100%;
+        }
+
+        #ui-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        #controls-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            pointer-events: auto;
+            max-width: 350px;
+        }
+
+        #info-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            pointer-events: auto;
+            max-width: 350px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        h2 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #4fc3f7;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 8px;
+        }
+
+        h3 {
+            font-size: 14px;
+            margin-top: 15px;
+            margin-bottom: 8px;
+            color: #81c784;
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-size: 12px;
+            margin-bottom: 5px;
+            color: #aaa;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            outline: none;
+            border-radius: 2px;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            color: #fff;
+            font-size: 12px;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            background: #4fc3f7;
+            border: none;
+            border-radius: 4px;
+            color: #000;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #29b6f6;
+        }
+
+        button:active {
+            background: #0288d1;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            font-size: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .info-label {
+            color: #aaa;
+        }
+
+        .info-value {
+            color: #fff;
+            font-weight: bold;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+
+        .status-good {
+            background: #4caf50;
+        }
+
+        .status-warning {
+            background: #ff9800;
+        }
+
+        .status-bad {
+            background: #f44336;
+        }
+
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            pointer-events: none;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-top: 4px solid #4fc3f7;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .legend {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 11px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 10px;
+            margin-right: 8px;
+            border-radius: 2px;
+        }
+
+        .hz-inner { background: #ff6b6b; }
+        .hz-outer { background: #4ecdc4; }
+        .hz-zone { background: rgba(76, 175, 80, 0.3); border: 1px solid #4caf50; }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="canvas-container"></div>
+
+        <div id="ui-overlay">
+            <!-- Loading indicator -->
+            <div id="loading">
+                <div class="spinner"></div>
+                <div>Loading 3D Scene...</div>
+            </div>
+
+            <!-- Controls Panel -->
+            <div id="controls-panel">
+                <h2>System Parameters</h2>
+
+                <div class="control-group">
+                    <label>Orbital Period (days)</label>
+                    <input type="number" id="period" value="112.3" min="0.1" max="1000" step="0.1">
+                </div>
+
+                <div class="control-group">
+                    <label>Transit Depth (ppm)</label>
+                    <input type="number" id="depth" value="376" min="1" max="50000" step="1">
+                </div>
+
+                <div class="control-group">
+                    <label>Transit Duration (hours)</label>
+                    <input type="number" id="duration" value="4.2" min="0.1" max="24" step="0.1">
+                </div>
+
+                <div class="control-group">
+                    <label>Stellar Temperature (K)</label>
+                    <input type="number" id="stellar-teff" value="4402" min="2500" max="10000" step="10">
+                </div>
+
+                <div class="control-group">
+                    <label>Stellar Radius (R☉)</label>
+                    <input type="number" id="stellar-radius" value="0.601" min="0.1" max="10" step="0.01">
+                </div>
+
+                <div class="control-group">
+                    <label>Surface Gravity (log g)</label>
+                    <input type="number" id="stellar-logg" value="4.653" min="3" max="5.5" step="0.001">
+                </div>
+
+                <button id="update-btn">Update System</button>
+                <button id="reset-view-btn">Reset View</button>
+
+                <div class="legend">
+                    <h3>Legend</h3>
+                    <div class="legend-item">
+                        <div class="legend-color hz-inner"></div>
+                        <span>HZ Inner Boundary</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color hz-zone"></div>
+                        <span>Habitable Zone</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color hz-outer"></div>
+                        <span>HZ Outer Boundary</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Info Panel -->
+            <div id="info-panel">
+                <h2>System Information</h2>
+
+                <h3>ML Prediction</h3>
+                <div class="info-row">
+                    <span class="info-label">Is Planet:</span>
+                    <span class="info-value" id="ml-is-planet">-</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Probability:</span>
+                    <span class="info-value" id="ml-probability">-</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Confidence:</span>
+                    <span class="info-value" id="ml-confidence">-</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Ensemble:</span>
+                    <span class="info-value" id="ml-ensemble">Soft Voting (5 models)</span>
+                </div>
+
+                <h3>Planet</h3>
+                <div class="info-row">
+                    <span class="info-label">Type:</span>
+                    <span class="info-value" id="planet-type">-</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Radius:</span>
+                    <span class="info-value" id="planet-radius">-</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Mass:</span>
+                    <span class="info-value" id="planet-mass">-</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Temperature:</span>
+                    <span class="info-value" id="planet-temp">-</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Density:</span>
+                    <span class="info-value" id="planet-density">-</span>
+                </div>
+
+                <h3>Orbit</h3>
+                <div class="info-row">
+                    <span class="info-label">Semi-major Axis:</span>
+                    <span class="info-value" id="orbit-sma">-</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Period:</span>
+                    <span class="info-value" id="orbit-period">-</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Velocity:</span>
+                    <span class="info-value" id="orbit-velocity">-</span>
+                </div>
+
+                <h3>Habitability</h3>
+                <div class="info-row">
+                    <span class="info-label">In Habitable Zone:</span>
+                    <span class="info-value" id="hz-status">-</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">HZ Range:</span>
+                    <span class="info-value" id="hz-range">-</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Distance from HZ:</span>
+                    <span class="info-value" id="hz-distance">-</span>
+                </div>
+
+                <h3>Validation</h3>
+                <div class="info-row">
+                    <span class="info-label">Status:</span>
+                    <span class="info-value" id="validation-status">-</span>
+                </div>
+                <div id="validation-messages" style="margin-top: 10px; font-size: 11px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="src/main.js"></script>
+</body>
+</html>
