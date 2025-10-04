@@ -1,0 +1,102 @@
+{
+  "lightgbm": {
+    "validation": {
+      "model": "lightgbm",
+      "dataset": "validation",
+      "accuracy": 0.9285075960679178,
+      "precision": 0.8837209302325582,
+      "recall": 0.926829268292683,
+      "f1": 0.9047619047619048,
+      "roc_auc": 0.9783549485706423
+    },
+    "test": {
+      "model": "lightgbm",
+      "dataset": "test",
+      "accuracy": 0.9160714285714285,
+      "precision": 0.8623853211009175,
+      "recall": 0.9170731707317074,
+      "f1": 0.8888888888888888,
+      "roc_auc": 0.9725386465132256
+    }
+  },
+  "xgboost": {
+    "validation": {
+      "model": "xgboost",
+      "dataset": "validation",
+      "accuracy": 0.9311885612153709,
+      "precision": 0.8827586206896552,
+      "recall": 0.9365853658536586,
+      "f1": 0.9088757396449704,
+      "roc_auc": 0.979424816815164
+    },
+    "test": {
+      "model": "xgboost",
+      "dataset": "test",
+      "accuracy": 0.9133928571428571,
+      "precision": 0.8581235697940504,
+      "recall": 0.9146341463414634,
+      "f1": 0.885478158205431,
+      "roc_auc": 0.9726932325661285
+    }
+  },
+  "random_forest": {
+    "validation": {
+      "model": "random_forest",
+      "dataset": "validation",
+      "accuracy": 0.9267202859696158,
+      "precision": 0.8849765258215962,
+      "recall": 0.9195121951219513,
+      "f1": 0.9019138755980861,
+      "roc_auc": 0.9799236299838315
+    },
+    "test": {
+      "model": "random_forest",
+      "dataset": "test",
+      "accuracy": 0.9178571428571428,
+      "precision": 0.8697674418604651,
+      "recall": 0.9121951219512195,
+      "f1": 0.8904761904761904,
+      "roc_auc": 0.972160769495019
+    }
+  },
+  "adaboost": {
+    "validation": {
+      "model": "adaboost",
+      "dataset": "validation",
+      "accuracy": 0.9222520107238605,
+      "precision": 0.8764568764568764,
+      "recall": 0.9170731707317074,
+      "f1": 0.8963051251489869,
+      "roc_auc": 0.9783153875262307
+    },
+    "test": {
+      "model": "adaboost",
+      "dataset": "test",
+      "accuracy": 0.9098214285714286,
+      "precision": 0.8601398601398601,
+      "recall": 0.9,
+      "f1": 0.8796185935637664,
+      "roc_auc": 0.9697852971487462
+    }
+  },
+  "extra_trees": {
+    "validation": {
+      "model": "extra_trees",
+      "dataset": "validation",
+      "accuracy": 0.8909740840035746,
+      "precision": 0.7903225806451613,
+      "recall": 0.9560975609756097,
+      "f1": 0.8653421633554084,
+      "roc_auc": 0.9688396573669547
+    },
+    "test": {
+      "model": "extra_trees",
+      "dataset": "test",
+      "accuracy": 0.8928571428571429,
+      "precision": 0.7959183673469388,
+      "recall": 0.9512195121951219,
+      "f1": 0.8666666666666667,
+      "roc_auc": 0.9629920989350738
+    }
+  }
+}
