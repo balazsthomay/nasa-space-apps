@@ -1,0 +1,12 @@
+specs/
+CLAUDE.md
+.claude/
+.venv/
+CONTEXT.md
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python

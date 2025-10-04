@@ -1,0 +1,54 @@
+{
+  "data_quality": {
+    "original_count": 9564,
+    "cleaned_count": 7463,
+    "removed_count": 2101,
+    "retention_rate": 0.7803220409870347
+  },
+  "splits": {
+    "train": 5224,
+    "val": 1119,
+    "test": 1120
+  },
+  "disposition_distribution": {
+    "train": {
+      "FALSE POSITIVE": 2051,
+      "CONFIRMED": 1914,
+      "CANDIDATE": 1259
+    },
+    "val": {
+      "FALSE POSITIVE": 439,
+      "CONFIRMED": 410,
+      "CANDIDATE": 270
+    },
+    "test": {
+      "FALSE POSITIVE": 440,
+      "CONFIRMED": 410,
+      "CANDIDATE": 270
+    }
+  },
+  "missing_data_summary": {
+    "kepler_name": 4728,
+    "koi_score": 1096,
+    "koi_period_err1": 70,
+    "koi_period_err2": 70,
+    "koi_time0bk_err1": 70,
+    "koi_time0bk_err2": 70,
+    "koi_impact_err1": 70,
+    "koi_impact_err2": 70,
+    "koi_duration_err1": 70,
+    "koi_duration_err2": 70,
+    "koi_depth_err1": 70,
+    "koi_depth_err2": 70,
+    "koi_teq_err1": 7463,
+    "koi_teq_err2": 7463,
+    "koi_tce_plnt_num": 222,
+    "koi_tce_delivname": 222,
+    "koi_steff_err1": 44,
+    "koi_steff_err2": 59,
+    "koi_slogg_err1": 44,
+    "koi_slogg_err2": 44,
+    "koi_srad_err1": 44,
+    "koi_srad_err2": 44
+  }
+}

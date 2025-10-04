@@ -1,0 +1,16 @@
+[project]
+name = "space-apps"
+version = "0.1.0"
+description = "Exoplanet System Detective - Ensemble ML detection + 3D visualization"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pandas>=2.0.0",
+    "numpy>=1.24.0",
+    "astropy>=5.3.0",
+    "astroquery>=0.4.6",
+    "lightkurve>=2.4.0",
+    "scikit-learn>=1.3.0",
+    "matplotlib>=3.7.0",
+    "seaborn>=0.12.0",
+]
