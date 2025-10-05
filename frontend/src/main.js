@@ -144,8 +144,10 @@ class ExoplanetVisualizer {
 
         const color = this.temperatureToColor(temperature);
 
-        // Star geometry (scaled for visibility)
-        const geometry = new THREE.SphereGeometry(radius * 10, 32, 32);
+        // Star geometry - scale to scene units
+        // 1 Solar radius = ~0.0047 AU, so use small multiplier to keep visible
+        const starRadius = Math.max(radius * 2, 0.5); // Minimum 0.5 units
+        const geometry = new THREE.SphereGeometry(starRadius, 32, 32);
 
         // Star material with glow
         const material = new THREE.MeshBasicMaterial({
@@ -159,7 +161,7 @@ class ExoplanetVisualizer {
         this.scene.add(this.star);
 
         // Add corona glow
-        const glowGeometry = new THREE.SphereGeometry(radius * 12, 32, 32);
+        const glowGeometry = new THREE.SphereGeometry(starRadius * 1.2, 32, 32);
         const glowMaterial = new THREE.MeshBasicMaterial({
             color: color,
             transparent: true,
@@ -179,8 +181,10 @@ class ExoplanetVisualizer {
             this.scene.remove(this.planet);
         }
 
-        // Planet geometry (scaled for visibility)
-        const planetRadius = Math.max(radius * 2, 1); // Ensure visible
+        // Planet geometry - EXAGGERATED for visibility (NOT to scale!)
+        // Educational visualization: make planets visible while keeping them smaller than stars
+        // Scale: 1 R⊕ ≈ 0.4 units (exaggerated ~1000x from reality for visibility)
+        const planetRadius = Math.max(radius * 0.4, 0.3); // Minimum 0.3 units for Earth-sized
         const geometry = new THREE.SphereGeometry(planetRadius, 32, 32);
 
         // Planet material
