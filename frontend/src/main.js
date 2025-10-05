@@ -463,28 +463,18 @@ class ExoplanetVisualizer {
 
     getDemoExamples() {
         return {
-            'kepler-442b': {
-                name: 'Kepler-442b',
-                period_days: 112.3,
-                transit_depth_ppm: 376,
-                transit_duration_hrs: 4.2,
-                stellar_teff: 4402,
-                stellar_radius: 0.601,
-                stellar_logg: 4.653,
-                description: 'Habitable zone super-Earth around K-dwarf'
-            },
-            'earth': {
-                name: 'Earth',
-                period_days: 365.25,
-                transit_depth_ppm: 84,
-                transit_duration_hrs: 13.0,
-                stellar_teff: 5778,
-                stellar_radius: 1.0,
-                stellar_logg: 4.44,
-                description: 'Our home planet - weak signal at detection limit'
+            'super-earth': {
+                name: 'Super-Earth (Confirmed)',
+                period_days: 55.33,
+                transit_depth_ppm: 325.7,
+                transit_duration_hrs: 6.92,
+                stellar_teff: 5376,
+                stellar_radius: 0.940,
+                stellar_logg: 4.462,
+                description: 'Confirmed super-Earth, 86.8% detection confidence'
             },
             'hot-jupiter': {
-                name: 'Hot Jupiter Example',
+                name: 'Hot Jupiter',
                 period_days: 3.5,
                 transit_depth_ppm: 15000,
                 transit_duration_hrs: 3.2,
@@ -494,7 +484,7 @@ class ExoplanetVisualizer {
                 description: 'Close-in gas giant with deep transit'
             },
             'mini-neptune': {
-                name: 'Mini-Neptune Example',
+                name: 'Mini-Neptune',
                 period_days: 24.0,
                 transit_depth_ppm: 1200,
                 transit_duration_hrs: 5.0,
@@ -603,15 +593,15 @@ class ExoplanetVisualizer {
             this.controls.update();
         });
 
-        // Load initial system (Kepler-442b)
+        // Load initial system (Super-Earth)
         this.updateSystem({
-            period_days: 112.3,
-            transit_depth_ppm: 376,
-            transit_duration_hrs: 4.2,
-            stellar_teff: 4402,
-            stellar_radius: 0.601,
-            stellar_logg: 4.653,
-            impact_parameter: 0.3
+            period_days: 55.33,
+            transit_depth_ppm: 325.7,
+            transit_duration_hrs: 6.92,
+            stellar_teff: 5376,
+            stellar_radius: 0.940,
+            stellar_logg: 4.462,
+            impact_parameter: 0.5
         });
     }
 

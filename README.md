@@ -1,61 +1,101 @@
-# Exoplanet System Detective
+# Exoplanet System Detective 🪐
 
-ML-powered exoplanet detection with 3D visualization, physics validation, and explainable AI.
+AI-powered exoplanet detection system with interactive 3D visualization. Analyzes transit signals using machine learning and renders complete planetary systems in real-time.
 
-**91% accuracy | 97% AUC | 5 ML models | Interactive 3D | Habitable zone calculations**
+![System Status](https://img.shields.io/badge/accuracy-91%25-brightgreen)
+![AUC](https://img.shields.io/badge/AUC-97%25-blue)
+
+## Features
+
+- **ML Ensemble**: 5 models (LightGBM, XGBoost, Random Forest, AdaBoost, Extra Trees) vote with SHAP explainability
+- **Physics Engine**: Calculates orbits, habitable zones, and validates physics
+- **3D Visualization**: Real-time rendering with accurate stellar colors and orbital mechanics
+- **Interactive Demos**: Pre-loaded examples including Hot Jupiters and Mini-Neptunes
 
 ## Quick Start
 
-### 1. Start the Backend (Terminal 1)
-```bash
-./start_server.sh
-```
+### Prerequisites
+- Python 3.12+
+- uv (Python package manager)
 
-### 2. Start the Frontend (Terminal 2)
+### Installation
+
 ```bash
+# Install dependencies
+uv sync
+
+# Start backend API (port 8000)
+./start_server.sh
+
+# Start frontend (port 3000)
 uv run serve_frontend.py
 ```
 
-### 3. Open Browser
-Navigate to **http://localhost:3000**
+Open http://localhost:3000 in your browser.
 
-## What You Can Do
+## Usage
 
-**🌟 Interactive 3D Exploration**
-- Adjust orbital period, transit depth, stellar temperature in the left panel
-- Click "Update System" to recalculate everything
-- Watch the planet orbit in real-time with accurate physics
-- See habitable zone boundaries (green = good for life!)
-- Rotate/zoom the view with your mouse
+### Try Demo Examples
+1. Select from dropdown: Hot Jupiter, Super Earth ,or, Mini-Neptune
+2. Click "Update System"
+3. View ML predictions, model votes, SHAP features, and 3D visualization
 
-**🔬 Scientific Analysis**
-- View planet type, mass, radius, and temperature
-- Check if planet is in the habitable zone
-- See validation warnings (too hot? wrong density?)
-- All calculations use real astrophysics (Kepler's laws, Kopparapu 2013 HZ)
+### Custom Analysis
+1. Input transit parameters:
+   - Orbital period (days)
+   - Transit depth (ppm)
+   - Transit duration (hours)
+   - Stellar temperature, radius, surface gravity
+2. Click "Update System"
+3. Explore results
 
-**🤖 ML Predictions** (via API)
-- 5-model ensemble with 91% accuracy
-- SHAP explanations showing why the model thinks it's a planet
-- Confidence scores based on model agreement
+## API Endpoints
 
-## System Features
+```bash
+# Health check
+curl http://localhost:8000/api/health
 
-- 7,463 training samples from NASA Exoplanet Archive
-- 46 engineered features (transit depth, stellar parameters, etc.)
-- Physics validation (density checks, Roche limit, temperature)
-- <100ms API response time
-- Real-time 3D rendering at 60 FPS
+# Predict system
+curl -X POST http://localhost:8000/api/predict-system \
+  -H "Content-Type: application/json" \
+  -d '{"period_days": 24.0, "transit_depth_ppm": 1200, ...}'
 
-## Requirements
+# Get demo targets
+curl http://localhost:8000/api/targets
 
-- Python 3.12+
-- Modern browser
-- `uv sync` to install dependencies
+# Model performance
+curl http://localhost:8000/api/models/performance
+```
+
+## Project Structure
+
+```
+space-apps/
+├── backend/           # FastAPI server, ML models, physics engine
+├── frontend/          # Three.js 3D visualization
+├── models/           # Trained models (13 MB total)
+├── data/             # Kepler mission data (7,463 targets)
+└── visualizations/   # Performance plots
+```
+
+## Performance
+
+- **Accuracy**: 91% on test set
+- **AUC**: 97%
+- **Response Time**: <100ms average
+- **Concurrent Handling**: 5 requests with 100% success
+- **3D Rendering**: 60 FPS
+
+## Tech Stack
+
+- **Backend**: Python, FastAPI, scikit-learn, LightGBM, XGBoost, SHAP
+- **Frontend**: Three.js (WebGL), JavaScript ES6
+- **Physics**: Kepler's laws, Kopparapu habitable zones
+- **Data**: NASA Kepler mission (2,746 confirmed planets)
 
 ## Credits
 
-NASA Exoplanet Archive | Kopparapu et al. (2013) | SHAP | Three.js
-
----
-*Built for NASA Space Apps Challenge 2025* 🌍✨
+- NASA Exoplanet Archive (KOI & TOI catalogs)
+- Kopparapu et al. (2013) - Habitable zone calculations
+- Weiss & Marcy (2014) - Mass-radius relations
+- SHAP library - Model explainability

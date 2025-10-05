@@ -3,6 +3,7 @@ CLAUDE.md
 .claude/
 .venv/
 CONTEXT.md
+SUBMISSION.md
 
 # Python
 __pycache__/
