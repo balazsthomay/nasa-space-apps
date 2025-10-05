@@ -368,6 +368,34 @@ class ExoplanetVisualizer {
                 `${(data.prediction.probability * 100).toFixed(1)}%`;
             document.getElementById('ml-confidence').textContent =
                 `${(data.prediction.confidence * 100).toFixed(1)}%`;
+
+            // Individual model votes
+            if (data.prediction.individual_models) {
+                const models = data.prediction.individual_models;
+                for (const [modelName, probability] of Object.entries(models)) {
+                    const elementId = `vote-${modelName}`;
+                    const element = document.getElementById(elementId);
+                    if (element) {
+                        const percent = (probability * 100).toFixed(1);
+                        const isPlanetVote = probability > 0.5;
+                        element.innerHTML = `<span class="status-indicator ${isPlanetVote ? 'status-good' : 'status-bad'}"></span>${percent}%`;
+                    }
+                }
+            }
+
+            // SHAP features
+            if (data.top_features) {
+                const shapContainer = document.getElementById('shap-features');
+                shapContainer.innerHTML = '';
+
+                data.top_features.slice(0, 5).forEach(feature => {
+                    const div = document.createElement('div');
+                    div.style.fontSize = '11px';
+                    div.style.marginBottom = '5px';
+                    div.innerHTML = `<span style="color: #81c784;">${feature.feature}:</span> <span style="color: #fff;">${feature.importance.toFixed(3)}</span>`;
+                    shapContainer.appendChild(div);
+                });
+            }
         }
 
         // Planet info
@@ -433,7 +461,126 @@ class ExoplanetVisualizer {
         }
     }
 
+    getDemoExamples() {
+        return {
+            'kepler-442b': {
+                name: 'Kepler-442b',
+                period_days: 112.3,
+                transit_depth_ppm: 376,
+                transit_duration_hrs: 4.2,
+                stellar_teff: 4402,
+                stellar_radius: 0.601,
+                stellar_logg: 4.653,
+                description: 'Habitable zone super-Earth around K-dwarf'
+            },
+            'earth': {
+                name: 'Earth',
+                period_days: 365.25,
+                transit_depth_ppm: 84,
+                transit_duration_hrs: 13.0,
+                stellar_teff: 5778,
+                stellar_radius: 1.0,
+                stellar_logg: 4.44,
+                description: 'Our home planet - weak signal at detection limit'
+            },
+            'hot-jupiter': {
+                name: 'Hot Jupiter Example',
+                period_days: 3.5,
+                transit_depth_ppm: 15000,
+                transit_duration_hrs: 3.2,
+                stellar_teff: 6100,
+                stellar_radius: 1.2,
+                stellar_logg: 4.3,
+                description: 'Close-in gas giant with deep transit'
+            },
+            'mini-neptune': {
+                name: 'Mini-Neptune Example',
+                period_days: 24.0,
+                transit_depth_ppm: 1200,
+                transit_duration_hrs: 5.0,
+                stellar_teff: 5200,
+                stellar_radius: 0.9,
+                stellar_logg: 4.5,
+                description: 'Small gas planet in temperate zone'
+            }
+        };
+    }
+
+    async loadDemoTargets() {
+        try {
+            const response = await fetch(`${API_URL}/api/targets`);
+            const data = await response.json();
+
+            const selector = document.getElementById('demo-selector');
+            const optgroup = selector.querySelector('optgroup[label="Test Set Examples"]');
+
+            data.targets.forEach(target => {
+                const option = document.createElement('option');
+                option.value = `api-${target.id}`;
+                option.textContent = `${target.name} - ${target.disposition} (${target.period_days.toFixed(1)}d, ${target.radius_rearth.toFixed(2)}R⊕)`;
+                option.dataset.target = JSON.stringify(target);
+                optgroup.appendChild(option);
+            });
+        } catch (error) {
+            console.error('Failed to load demo targets:', error);
+        }
+    }
+
     setupUI() {
+        // Load demo targets
+        this.loadDemoTargets();
+
+        // Demo selector
+        document.getElementById('demo-selector').addEventListener('change', async (e) => {
+            const selectedValue = e.target.value;
+            console.log('Demo selector changed:', selectedValue);
+
+            if (!selectedValue) return;
+
+            const demoExamples = this.getDemoExamples();
+            console.log('Available demo examples:', Object.keys(demoExamples));
+
+            // Check if it's a hardcoded example
+            if (demoExamples[selectedValue]) {
+                const example = demoExamples[selectedValue];
+                console.log('Loading hardcoded example:', example.name, example);
+
+                document.getElementById('period').value = example.period_days;
+                document.getElementById('depth').value = example.transit_depth_ppm;
+                document.getElementById('duration').value = example.transit_duration_hrs;
+                document.getElementById('stellar-teff').value = example.stellar_teff;
+                document.getElementById('stellar-radius').value = example.stellar_radius;
+                document.getElementById('stellar-logg').value = example.stellar_logg;
+
+                console.log('Input fields updated, triggering system update...');
+
+                // Trigger update
+                document.getElementById('update-btn').click();
+                return;
+            }
+
+            // Handle API targets (prefixed with 'api-')
+            const selectedOption = e.target.options[e.target.selectedIndex];
+            if (!selectedOption.dataset.target) return;
+
+            const target = JSON.parse(selectedOption.dataset.target);
+
+            try {
+                // Update input fields from API target
+                document.getElementById('period').value = target.period_days || 112.3;
+                document.getElementById('depth').value = target.transit_depth_ppm || 376;
+                document.getElementById('duration').value = target.transit_duration_hrs || 4.2;
+                document.getElementById('stellar-teff').value = target.stellar_teff || 4402;
+                document.getElementById('stellar-radius').value = target.stellar_radius || 0.601;
+                document.getElementById('stellar-logg').value = target.stellar_logg || 4.653;
+
+                // Trigger update
+                document.getElementById('update-btn').click();
+            } catch (error) {
+                console.error('Failed to load target details:', error);
+            }
+        });
+
         // Update button
         document.getElementById('update-btn').addEventListener('click', () => {
             const params = {

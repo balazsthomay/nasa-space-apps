@@ -138,7 +138,12 @@ async def startup_event():
                 "koi_name": row['koi_name'],
                 "disposition": row['disposition'],
                 "period_days": float(row['orbital_period_days']),
-                "radius_rearth": float(row['planet_radius_rearth'])
+                "radius_rearth": float(row['planet_radius_rearth']),
+                "transit_depth_ppm": float(row.get('transit_depth_ppm', 0)),
+                "transit_duration_hrs": float(row.get('transit_duration_hrs', 0)),
+                "stellar_teff": float(row.get('stellar_teff_K', 5778)),
+                "stellar_radius": float(row.get('stellar_radius_rsun', 1.0)),
+                "stellar_logg": float(row.get('stellar_logg', 4.4))
             }
             for idx, row in test_df.head(20).iterrows()
         ]

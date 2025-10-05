@@ -109,7 +109,7 @@
             border-radius: 2px;
         }
 
-        input[type="number"] {
+        input[type="number"], select {
             width: 100%;
             padding: 8px;
             background: rgba(255, 255, 255, 0.1);
@@ -117,6 +117,20 @@
             border-radius: 4px;
             color: #fff;
             font-size: 12px;
+        }
+
+        select {
+            cursor: pointer;
+        }
+
+        select option {
+            background: #1a1a1a;
+            color: #fff;
+        }
+
+        input[type="number"]:focus, select:focus {
+            outline: none;
+            border-color: #4fc3f7;
         }
 
         button {
@@ -242,6 +256,22 @@
                 <h2>System Parameters</h2>
 
                 <div class="control-group">
+                    <label>Demo Examples</label>
+                    <select id="demo-selector">
+                        <option value="">-- Select Example --</option>
+                        <optgroup label="Famous Systems">
+                            <option value="kepler-442b">Kepler-442b (Habitable Zone Super-Earth)</option>
+                            <option value="earth">Earth (Our Home - Weak Signal)</option>
+                            <option value="hot-jupiter">Hot Jupiter (Close-in Gas Giant)</option>
+                            <option value="mini-neptune">Mini-Neptune (Small Gas Planet)</option>
+                        </optgroup>
+                        <optgroup label="Test Set Examples">
+                            <!-- Will be populated from API -->
+                        </optgroup>
+                    </select>
+                </div>
+
+                <div class="control-group">
                     <label>Orbital Period (days)</label>
                     <input type="number" id="period" value="112.3" min="0.1" max="1000" step="0.1">
                 </div>
@@ -313,6 +343,35 @@
                     <span class="info-value" id="ml-ensemble">Soft Voting (5 models)</span>
                 </div>
 
+                <h3>Model Votes</h3>
+                <div id="model-votes">
+                    <div class="info-row">
+                        <span class="info-label">LightGBM:</span>
+                        <span class="info-value" id="vote-lightgbm">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">XGBoost:</span>
+                        <span class="info-value" id="vote-xgboost">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Random Forest:</span>
+                        <span class="info-value" id="vote-random_forest">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">AdaBoost:</span>
+                        <span class="info-value" id="vote-adaboost">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Extra Trees:</span>
+                        <span class="info-value" id="vote-extra_trees">-</span>
+                    </div>
+                </div>
+
+                <h3>Top Features (SHAP)</h3>
+                <div id="shap-features">
+                    <div style="font-size: 11px; color: #888;">Loading...</div>
+                </div>
+
                 <h3>Planet</h3>
                 <div class="info-row">
                     <span class="info-label">Type:</span>
@@ -373,6 +432,6 @@
         </div>
     </div>
 
-    <script type="module" src="src/main.js"></script>
+    <script type="module" src="src/main.js?v=2"></script>
 </body>
 </html>
